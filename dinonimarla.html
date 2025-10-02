@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Barbie Dino Game</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(to top, #ffd6f6, #ffe6f9);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      height: 100vh;
+      font-family: "Comic Sans MS", cursive, sans-serif;
+      overflow: hidden;
+    }
+
+    /* Barbie Banner */
+    .banner {
+      width: 100%;
+      text-align: center;
+      padding: 15px 0;
+      background: linear-gradient(90deg, #ff99cc, #ff66b2, #ff1493);
+      color: #fff;
+      font-size: 38px;
+      font-weight: bold;
+      letter-spacing: 3px;
+      text-shadow: 2px 2px 5px #ffccff, 0 0 20px #ff66cc;
+      border-bottom: 4px solid #ff69b4;
+      font-family: "Brush Script MT", cursive;
+    }
+
+    .game {
+      position: relative;
+      width: 800px;
+      height: 300px;
+      border: 4px solid #ff69b4;
+      border-radius: 15px;
+      background: linear-gradient(to top, #fff0f7 80%, #ffe6f9 100%);
+      overflow: hidden;
+      box-shadow: 0 0 20px rgba(255, 20, 147, 0.4);
+    }
+
+    .ground {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 200%;
+      height: 50px;
+      background: repeating-linear-gradient(
+        -45deg,
+        #ff99cc,
+        #ff99cc 20px,
+        #ff66b2 20px,
+        #ff66b2 40px
+      );
+      animation: groundMove 2s linear infinite;
+    }
+
+    @keyframes groundMove {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    /* Barbie Character */
+    .dino {
+      position: absolute;
+      bottom: 50px;
+      left: 50px;
+      width: 70px;
+      height: 100px;
+      background: url("barb.png") no-repeat center/contain;
+      transition: box-shadow 0.3s;
+    }
+
+    .shield-active {
+      box-shadow: 0 0 20px 8px rgba(255, 182, 193, 0.9);
+      border-radius: 50%;
+    }
+
+    .obstacle {
+      position: absolute;
+      bottom: 50px;
+      right: -50px;
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(45deg, #ff66cc, #ffccff);
+      transform: rotate(45deg);
+      animation: moveObstacle 2.5s linear infinite;
+      border: 2px solid #fff;
+    }
+
+    @keyframes moveObstacle {
+      0% { right: -50px; }
+      100% { right: 850px; }
+    }
+
+    .powerup {
+      position: absolute;
+      bottom: 150px;
+      right: -50px;
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      clip-path: polygon(
+        50% 15%,
+        61% 35%,
+        82% 35%,
+        68% 54%,
+        72% 75%,
+        50% 65%,
+        28% 75%,
+        32% 54%,
+        18% 35%,
+        39% 35%
+      );
+      background: #ff66b2;
+      animation: movePowerup 7s linear infinite;
+      border: 2px solid #fff;
+    }
+
+    @keyframes movePowerup {
+      0% { right: -50px; }
+      100% { right: 850px; }
+    }
+
+    .jump {
+      animation: jump 0.6s ease-out;
+    }
+
+    @keyframes jump {
+      0% { bottom: 50px; }
+      50% { bottom: 160px; }
+      100% { bottom: 50px; }
+    }
+
+    .score {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      font-size: 22px;
+      font-weight: bold;
+      color: #ff1493;
+      text-shadow: 1px 1px 2px #fff;
+    }
+
+    .game-over {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 28px;
+      font-weight: bold;
+      color: #ff0066;
+      text-shadow: 2px 2px 5px #fff;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- Barbie Banner -->
+  <div class="banner">✨ Barbie Dino Run ✨</div>
+
+  <!-- Game -->
+  <div class="game">
+    <div class="ground"></div>
+    <div class="dino" id="dino"></div>
+    <div class="obstacle" id="obstacle"></div>
+    <div class="powerup" id="powerup"></div>
+    <div class="score" id="score">Score: 0</div>
+    <div class="game-over" id="gameOver">🌸 Game Over! Press R to Restart 🌸</div>
+  </div>
+
+  <script>
+    const dino = document.getElementById("dino");
+    const obstacle = document.getElementById("obstacle");
+    const powerup = document.getElementById("powerup");
+    const scoreEl = document.getElementById("score");
+    const gameOverEl = document.getElementById("gameOver");
+
+    let isJumping = false;
+    let score = 0;
+    let gameRunning = true;
+    let shield = false;
+    let shieldTimeout;
+
+    document.addEventListener("keydown", (e) => {
+      if (e.code === "Space" || e.code === "ArrowUp") {
+        jump();
+      }
+      if (e.code === "KeyR" && !gameRunning) {
+        restartGame();
+      }
+    });
+
+    function jump() {
+      if (!isJumping && gameRunning) {
+        isJumping = true;
+        dino.classList.add("jump");
+        setTimeout(() => {
+          dino.classList.remove("jump");
+          isJumping = false;
+        }, 600);
+      }
+    }
+
+    let checkCollision = setInterval(() => {
+      if (!gameRunning) return;
+
+      let dinoRect = dino.getBoundingClientRect();
+      let obsRect = obstacle.getBoundingClientRect();
+      let powerRect = powerup.getBoundingClientRect();
+
+      // Obstacle collision
+      if (
+        dinoRect.right > obsRect.left &&
+        dinoRect.left < obsRect.right &&
+        dinoRect.bottom > obsRect.top
+      ) {
+        if (shield) {
+          shield = false;
+          dino.classList.remove("shield-active");
+        } else {
+          gameOver();
+        }
+      }
+
+      // Power-up collision
+      if (
+        dinoRect.right > powerRect.left &&
+        dinoRect.left < powerRect.right &&
+        dinoRect.bottom > powerRect.top
+      ) {
+        activateShield();
+        resetPowerup();
+      }
+
+      // Update score
+      score++;
+      scoreEl.innerText = "Score: " + score;
+    }, 100);
+
+    function activateShield() {
+      shield = true;
+      dino.classList.add("shield-active");
+      clearTimeout(shieldTimeout);
+      shieldTimeout = setTimeout(() => {
+        shield = false;
+        dino.classList.remove("shield-active");
+      }, 5000); // shield lasts 5s
+    }
+
+    function resetPowerup() {
+      powerup.style.animation = "none";
+      powerup.offsetHeight; // reflow
+      powerup.style.animation = "movePowerup 7s linear infinite";
+    }
+
+    function gameOver() {
+      gameRunning = false;
+      obstacle.style.animationPlayState = "paused";
+      powerup.style.animationPlayState = "paused";
+      document.querySelector(".ground").style.animationPlayState = "paused";
+      gameOverEl.style.display = "block";
+    }
+
+    function restartGame() {
+      score = 0;
+      shield = false;
+      dino.classList.remove("shield-active");
+      scoreEl.innerText = "Score: 0";
+      obstacle.style.animationPlayState = "running";
+      powerup.style.animationPlayState = "running";
+      document.querySelector(".ground").style.animationPlayState = "running";
+      gameOverEl.style.display = "none";
+      gameRunning = true;
+    }
+  </script>
+</body>
+</html>

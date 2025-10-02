@@ -1,0 +1,312 @@
+<<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login, Sign Up & Calculator (LUDSM)</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Live animated gradient background */
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(270deg, #ec49c9, #d447b6, #6a11cb, #2575fc);
+      background-size: 800% 800%;
+      animation: gradientMove 15s ease infinite;
+      z-index: -1;
+    }
+
+    @keyframes gradientMove {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.15);
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      width: 320px;
+      backdrop-filter: blur(15px);
+    }
+
+    .hidden { display: none; }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #fff;
+    }
+
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #92125d;
+      border: none;
+      color: #fff;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    button:hover { background-color: #0056cc; }
+
+    .error {
+      color: yellow;
+      font-size: 14px;
+      margin-top: 5px;
+      text-align: center;
+    }
+
+    .link {
+      margin-top: 10px;
+      text-align: center;
+      color: #fff;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    .calculator {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .calculator input {
+      grid-column: span 4;
+      padding: 10px;
+      font-size: 20px;
+      text-align: right;
+      height: 50px;
+      border: none;
+      border-radius: 5px;
+      background: #fff;
+    }
+
+    .calculator button {
+      padding: 15px;
+      font-size: 18px;
+      border: none;
+      border-radius: 5px;
+      background-color: #f18cf1a9;
+      cursor: pointer;
+    }
+
+    .calculator button:hover {
+      background-color: #e90ade;
+      color: #fff;
+    }
+
+    .calculator .equals {
+      background-color: #e100ff;
+      color: #fff;
+    }
+
+    .calculator .equals:hover { background-color: #b40588; }
+  </style>
+</head>
+<body>
+  <!-- Sign Up Form -->
+  <div class="container" id="signup-container">
+    <h2>Sign Up</h2>
+    <input type="text" id="new-username" placeholder="Create Username" required />
+    <input type="password" id="new-password" placeholder="Create Password (min 8 chars)" required />
+    <div class="error" id="signup-error"></div>
+    <button onclick="signUp()">Sign Up</button>
+    <div class="link" onclick="showLogin()">Already have an account? Login</div>
+  </div>
+
+  <!-- Login Form -->
+  <div class="container hidden" id="login-container">
+    <h2>Login</h2>
+    <input type="text" id="username" placeholder="Username" required />
+    <input type="password" id="password" placeholder="Password" required />
+    <div class="error" id="login-error"></div>
+    <button onclick="login()">Login</button>
+    <div class="link" onclick="showSignup()">Don't have an account? Sign Up</div>
+  </div>
+
+  <!-- User Management (Update/Delete) -->
+  <div class="container hidden" id="manage-container">
+    <h2>Manage Account</h2>
+    <button onclick="showUpdate()">Update Password</button>
+    <button onclick="deleteAccount()">Delete Account</button>
+    <button onclick="logout()">Logout</button>
+  </div>
+
+  <!-- Update Password -->
+  <div class="container hidden" id="update-container">
+    <h2>Update Password</h2>
+    <input type="password" id="update-password" placeholder="New Password (min 8 chars)" required />
+    <div class="error" id="update-error"></div>
+    <button onclick="updatePassword()">Update</button>
+    <button onclick="cancelUpdate()">Cancel</button>
+  </div>
+
+  <!-- Calculator -->
+  <div class="container hidden" id="calculator-container">
+    <h2>Calculator</h2>
+    <div class="calculator">
+      <input type="text" id="display" disabled />
+      <button onclick="clearDisplay()">C</button>
+      <button onclick="backspace()">⌫</button>
+      <button onclick="appendValue('/')">/</button>
+      <button onclick="appendValue('*')">*</button>
+      <button onclick="appendValue('7')">7</button>
+      <button onclick="appendValue('8')">8</button>
+      <button onclick="appendValue('9')">9</button>
+      <button onclick="appendValue('-')">-</button>
+      <button onclick="appendValue('4')">4</button>
+      <button onclick="appendValue('5')">5</button>
+      <button onclick="appendValue('6')">6</button>
+      <button onclick="appendValue('+')">+</button>
+      <button onclick="appendValue('1')">1</button>
+      <button onclick="appendValue('2')">2</button>
+      <button onclick="appendValue('3')">3</button>
+      <button class="equals" onclick="calculate()">=</button>
+      <button onclick="appendValue('0')">0</button>
+      <button onclick="appendValue('.')">.</button>
+      <button onclick="clearDisplay()">C</button>
+    </div>
+    <button onclick="showManage()">Manage Account</button>
+  </div>
+
+  <script>
+    // Show/Hide Forms
+    function showSignup() {
+      document.getElementById("login-container").classList.add("hidden");
+      document.getElementById("signup-container").classList.remove("hidden");
+    }
+    function showLogin() {
+      document.getElementById("signup-container").classList.add("hidden");
+      document.getElementById("login-container").classList.remove("hidden");
+    }
+    function showManage() {
+      document.getElementById("calculator-container").classList.add("hidden");
+      document.getElementById("manage-container").classList.remove("hidden");
+    }
+    function showUpdate() {
+      document.getElementById("manage-container").classList.add("hidden");
+      document.getElementById("update-container").classList.remove("hidden");
+    }
+    function cancelUpdate() {
+      document.getElementById("update-container").classList.add("hidden");
+      document.getElementById("manage-container").classList.remove("hidden");
+    }
+
+    // Sign Up
+    function signUp() {
+      const username = document.getElementById("new-username").value.trim();
+      const password = document.getElementById("new-password").value;
+      const error = document.getElementById("signup-error");
+
+      if (!username || !password) {
+        error.textContent = "All fields are required.";
+        return;
+      }
+      if (password.length < 8) {
+        error.textContent = "Password must be at least 8 characters.";
+        return;
+      }
+      localStorage.setItem("username", username);
+      localStorage.setItem("password", password);
+      error.textContent = "";
+      alert("Sign up successful! Please log in.");
+      showLogin();
+    }
+
+    // Login
+    function login() {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value;
+      const error = document.getElementById("login-error");
+
+      const savedUser = localStorage.getItem("username");
+      const savedPass = localStorage.getItem("password");
+
+      if (username === savedUser && password === savedPass) {
+        document.getElementById("login-container").classList.add("hidden");
+        document.getElementById("calculator-container").classList.remove("hidden");
+      } else {
+        error.textContent = "Invalid username or password.";
+      }
+    }
+
+    // Update Password
+    function updatePassword() {
+      const newPass = document.getElementById("update-password").value;
+      const error = document.getElementById("update-error");
+      if (newPass.length < 8) {
+        error.textContent = "Password must be at least 8 characters.";
+        return;
+      }
+      localStorage.setItem("password", newPass);
+      error.textContent = "";
+      alert("Password updated!");
+      cancelUpdate();
+    }
+
+    // Delete Account
+    function deleteAccount() {
+      if (confirm("Are you sure you want to delete your account?")) {
+        localStorage.removeItem("username");
+        localStorage.removeItem("password");
+        alert("Account deleted.");
+        logout();
+      }
+    }
+
+    // Logout
+    function logout() {
+      document.getElementById("manage-container").classList.add("hidden");
+      document.getElementById("calculator-container").classList.add("hidden");
+      showLogin();
+    }
+
+    // Calculator Functions
+    function appendValue(val) {
+      document.getElementById("display").value += val;
+    }
+    function clearDisplay() {
+      document.getElementById("display").value = "";
+    }
+    function backspace() {
+      const display = document.getElementById("display");
+      display.value = display.value.slice(0, -1);
+    }
+    function calculate() {
+      const display = document.getElementById("display");
+      try { display.value = eval(display.value); }
+      catch (e) { display.value = "Error"; }
+    }
+  </script>
+</body>
+</html>

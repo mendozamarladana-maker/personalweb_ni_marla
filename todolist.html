@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>To‑Do List App</title>
+  <style>
+    :root{
+      --bg:#0f1724; /* deep blue */
+      --card:#0b1220cc; /* translucent card */
+      --glass: rgba(255,255,255,0.06);
+      --accent:#7c5cff;
+      --muted:#9aa4b2;
+      --success:#22c55e;
+      --danger:#ff6b6b;
+      --radius:14px;
+      --shadow: 0 6px 20px rgba(2,6,23,0.6);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+
+    /* Page layout */
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background: radial-gradient(1200px 600px at 10% 10%, #122033 0%, transparent 10%),
+                  radial-gradient(800px 400px at 90% 90%, #081229 0%, transparent 10%),
+                  linear-gradient(180deg,var(--bg), #071022 120%);
+      color:#e6eef6;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:32px;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      gap:20px;
+    }
+
+    .wrap{
+      width:min(920px, 96%);
+      display:grid;
+      grid-template-columns: 1fr 340px;
+      gap:22px;
+    }
+
+    /* Card */
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:20px;
+      backdrop-filter: blur(6px) saturate(120%);
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+
+    header.app-header{
+      display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;
+    }
+    .brand{
+      display:flex;gap:12px;align-items:center;
+    }
+    .logo{
+      width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#4cc9f0);
+      display:flex;align-items:center;justify-content:center;font-weight:700;color:white;box-shadow:0 6px 18px rgba(124,92,255,0.18);
+    }
+    .title{font-size:18px;font-weight:600}
+    .subtitle{font-size:12px;color:var(--muted)}
+
+    /* Input row */
+    .add-row{display:flex;gap:10px;margin-bottom:16px}
+    .input{
+      flex:1;display:flex;align-items:center;padding:10px 12px;border-radius:10px;background:var(--glass);
+      border:1px solid rgba(255,255,255,0.03);
+    }
+    .input input{border:0;background:transparent;color:inherit;font-size:15px;outline:none;width:100%}
+    .btn{
+      border:0;padding:10px 14px;border-radius:10px;background:linear-gradient(90deg,var(--accent),#4cc9f0);color:#041022;font-weight:600;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,0.4);
+    }
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
+
+    /* List */
+    .list{display:flex;flex-direction:column;gap:8px;max-height:56vh;overflow:auto;padding-right:6px}
+    .task{
+      display:flex;align-items:center;gap:12px;padding:10px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);
+      border:1px solid rgba(255,255,255,0.02);
+      transition:transform .18s ease, background .18s ease;
+    }
+    .task:hover{transform:translateY(-3px)}
+    .checkbox{
+      width:20px;height:20px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;cursor:pointer;
+    }
+    .checkbox.completed{background:linear-gradient(90deg,var(--success), #16a34a);border:0;color:white}
+    .task-body{flex:1;display:flex;flex-direction:column}
+    .task-title{font-size:15px}
+    .task-title.completed{color:var(--muted);text-decoration:line-through}
+    .task-meta{font-size:12px;color:var(--muted);margin-top:4px}
+
+    .actions{display:flex;gap:8px}
+    .icon-btn{background:transparent;border:0;padding:8px;border-radius:8px;cursor:pointer}
+    .icon-btn:hover{background:rgba(255,255,255,0.02)}
+
+    /* Right column */
+    .stats{display:flex;flex-direction:column;gap:12px}
+    .stat{padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);border:1px solid rgba(255,255,255,0.02);}
+    .filters{display:flex;gap:8px}
+    .filter{padding:8px 10px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03);cursor:pointer}
+    .filter.active{background:linear-gradient(90deg,var(--accent),#4cc9f0);color:#041022;border:0}
+
+    /* Empty state */
+    .empty{padding:36px;text-align:center;color:var(--muted);border-radius:10px}
+
+    /* Edit input */
+    .edit-input{width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
+
+    /* Responsive */
+    @media (max-width:880px){
+      .wrap{grid-template-columns:1fr;}
+      .card.right{order:2}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <main class="card" aria-labelledby="appHeading">
+      <header class="app-header">
+        <div class="brand">
+          <div class="logo">TD</div>
+          <div>
+            <div class="title" id="appHeading">To‑Do List</div>
+            <div class="subtitle">Plan your day. Finish what matters.</div>
+          </div>
+        </div>
+        <div class="subtitle" id="clock" aria-live="polite"></div>
+      </header>
+
+      <section class="add-row" aria-label="Add new task">
+        <div class="input">
+          <input id="newTask" type="text" placeholder="Add a new task and press Enter..." aria-label="New task">
+        </div>
+        <button class="btn" id="addBtn" aria-label="Add task">Add</button>
+      </section>
+
+      <section>
+        <div class="list" id="taskList" role="list" aria-live="polite"></div>
+        <div id="emptyState" class="empty" hidden>
+          No tasks yet — add one to get started ✨
+        </div>
+      </section>
+    </main>
+
+    <aside class="card right">
+      <div class="stats">
+        <div class="stat">
+          <strong id="countAll">0</strong> total tasks
+        </div>
+        <div class="stat">
+          <strong id="countActive">0</strong> active
+        </div>
+        <div class="stat">
+          <strong id="countCompleted">0</strong> completed
+        </div>
+        <div class="stat">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div style="font-weight:600">Filters</div>
+            <button class="btn ghost" id="clearCompleted">Clear Completed</button>
+          </div>
+          <div class="filters" role="tablist">
+            <button class="filter active" data-filter="all" role="tab">All</button>
+            <button class="filter" data-filter="active" role="tab">Active</button>
+            <button class="filter" data-filter="completed" role="tab">Completed</button>
+          </div>
+        </div>
+
+        <div class="stat">
+          <div style="font-weight:600;margin-bottom:8px">Tips</div>
+          <div class="subtitle" style="color:var(--muted);font-size:13px">Press Enter to add tasks — double click a task to edit it. Your tasks are saved locally in the browser.</div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <template id="taskTemplate">
+    <div class="task" role="listitem">
+      <button class="checkbox" aria-label="Toggle complete">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="task-body">
+        <div class="task-title"></div>
+        <div class="task-meta"></div>
+      </div>
+      <div class="actions">
+        <button class="icon-btn edit" title="Edit" aria-label="Edit task">
+          ✏️
+        </button>
+        <button class="icon-btn delete" title="Delete" aria-label="Delete task">
+          🗑️
+        </button>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    // Simple To-Do App JavaScript
+    (function(){
+      const KEY = 'todo.tasks.v1';
+      let tasks = JSON.parse(localStorage.getItem(KEY) || '[]');
+      let filter = 'all';
+
+      // Elements
+      const newInput = document.getElementById('newTask');
+      const addBtn = document.getElementById('addBtn');
+      const listEl = document.getElementById('taskList');
+      const emptyState = document.getElementById('emptyState');
+      const tmpl = document.getElementById('taskTemplate');
+      const countAll = document.getElementById('countAll');
+      const countActive = document.getElementById('countActive');
+      const countCompleted = document.getElementById('countCompleted');
+      const filters = document.querySelectorAll('.filter');
+      const clearCompletedBtn = document.getElementById('clearCompleted');
+
+      // Clock
+      const clock = document.getElementById('clock');
+      function updateClock(){
+        const d = new Date();
+        clock.textContent = d.toLocaleString(undefined, {weekday:'short',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+      }
+      updateClock(); setInterval(updateClock, 60_000);
+
+      // Utilities
+      function save(){ localStorage.setItem(KEY, JSON.stringify(tasks)); }
+      function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+
+      // Create task element
+      function renderTask(task){
+        const node = tmpl.content.firstElementChild.cloneNode(true);
+        const checkbox = node.querySelector('.checkbox');
+        const titleEl = node.querySelector('.task-title');
+        const meta = node.querySelector('.task-meta');
+        const editBtn = node.querySelector('.edit');
+        const delBtn = node.querySelector('.delete');
+
+        titleEl.textContent = task.text;
+        meta.textContent = new Date(task.createdAt).toLocaleString();
+        if(task.completed){
+          checkbox.classList.add('completed');
+          titleEl.classList.add('completed');
+        }
+
+        checkbox.addEventListener('click', ()=>{
+          task.completed = !task.completed;
+          save();
+          refresh();
+        });
+
+        delBtn.addEventListener('click', ()=>{
+          tasks = tasks.filter(t=>t.id !== task.id);
+          save(); refresh();
+        });
+
+        editBtn.addEventListener('click', ()=> startEdit(node, task, titleEl));
+
+        // Double click to edit
+        node.addEventListener('dblclick', ()=> startEdit(node, task, titleEl));
+
+        node.dataset.id = task.id;
+        return node;
+      }
+
+      function startEdit(node, task, titleEl){
+        const prev = titleEl.textContent;
+        const input = document.createElement('input');
+        input.className = 'edit-input';
+        input.value = prev;
+        titleEl.replaceWith(input);
+        input.focus();
+        input.select();
+
+        function commit(){
+          const val = input.value.trim();
+          if(val){ task.text = val; task.updatedAt = Date.now(); save(); }
+          cancel();
+        }
+        function cancel(){
+          const span = document.createElement('div');
+          span.className = 'task-title';
+          span.textContent = task.text;
+          if(task.completed) span.classList.add('completed');
+          input.replaceWith(span);
+          refresh();
+        }
+
+        input.addEventListener('keydown', (e)=>{
+          if(e.key === 'Enter') commit();
+          if(e.key === 'Escape') cancel();
+        });
+        input.addEventListener('blur', commit);
+      }
+
+      function render(){
+        listEl.innerHTML = '';
+        const filtered = tasks.filter(t=>{
+          if(filter === 'active') return !t.completed;
+          if(filter === 'completed') return t.completed;
+          return true;
+        });
+
+        if(filtered.length ===0){ emptyState.hidden = false; } else { emptyState.hidden = true; }
+
+        filtered.sort((a,b)=> b.createdAt - a.createdAt).forEach(t=>{
+          const node = renderTask(t);
+          listEl.appendChild(node);
+        });
+
+        countAll.textContent = tasks.length;
+        countActive.textContent = tasks.filter(t=>!t.completed).length;
+        countCompleted.textContent = tasks.filter(t=>t.completed).length;
+      }
+
+      function refresh(){
+        render();
+      }
+
+      // Add task
+      function addTask(text){
+        const t = { id:uid(), text, completed:false, createdAt:Date.now() };
+        tasks.push(t); save(); refresh();
+      }
+
+      // Event handlers
+      addBtn.addEventListener('click', ()=>{
+        const v = newInput.value.trim(); if(!v) return; addTask(v); newInput.value=''; newInput.focus();
+      });
+
+      newInput.addEventListener('keydown', (e)=>{
+        if(e.key === 'Enter'){
+          const v = newInput.value.trim(); if(!v) return; addTask(v); newInput.value='';
+        }
+      });
+
+      filters.forEach(btn=> btn.addEventListener('click', ()=>{
+        filters.forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        filter = btn.dataset.filter; refresh();
+      }));
+
+      clearCompletedBtn.addEventListener('click', ()=>{
+        tasks = tasks.filter(t=>!t.completed); save(); refresh();
+      });
+
+      // Initialize with sample if empty (optional). Comment out if undesired.
+      if(tasks.length === 0){
+        // tasks.push({id:uid(), text:'Welcome! Add your first task', completed:false, createdAt:Date.now()});
+        // save();
+      }
+
+      // First render
+      refresh();
+
+      // Accessibility: focus add input on load
+      newInput.focus();
+
+      // Expose for debugging (optional)
+      window.__TODO_APP = {get tasks(){return tasks}, addTask};
+    })();
+  </script>
+</body>
+</html>
